@@ -34,4 +34,10 @@ This app uses **Streamlit** as the frontend and **Supabase** as the cloud backen
 ### 1. Clone the repo
 ```bash
 git clone https://github.com/your-username/not-it-app.git
+
+
 cd not-it-app
+
+
+
+
