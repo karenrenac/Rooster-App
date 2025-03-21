@@ -3,9 +3,55 @@ import requests
 import random
 from collections import Counter
 
-# ------------------------------
+# -----------------------------
+# 💅 Aesthetic Mobile-Friendly CSS Injection
+# -----------------------------
+st.markdown(
+    """
+    <style>
+    /* Background image styling */
+    body {
+        background: url('https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/side-bg.jpg'), 
+                    url('https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/side-bg.jpg');
+        background-repeat: repeat-y, repeat-y;
+        background-position: left center, right center;
+        background-size: contain, contain;
+        background-attachment: fixed, fixed;
+        background-color: #0e1117;
+    }
+
+    /* Center content block */
+    .block-container {
+        background-color: rgba(0, 0, 0, 0.85);
+        max-width: 900px;
+        margin: auto;
+        padding: 2rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0px 0px 25px rgba(0,0,0,0.6);
+    }
+
+    /* Mobile tweaks */
+    @media only screen and (max-width: 768px) {
+        body {
+            background-position: center top;
+            background-size: cover;
+        }
+        .block-container {
+            padding: 1rem;
+            max-width: 95%;
+        }
+        h1, h2, h3 {
+            font-size: 1.5rem !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# -----------------------------
 # 🔐 Supabase Setup
-# ------------------------------
+# -----------------------------
 SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
 
@@ -15,77 +61,57 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-# ------------------------------
-# 📥 Load Data from Supabase
-# ------------------------------
+# -----------------------------
+# 🔁 Supabase Functions
+# -----------------------------
 def load_friends():
     try:
-        url = f"{SUPABASE_URL}/rest/v1/Friends?select=*"
-        res = requests.get(url, headers=HEADERS)
-        st.write("DEBUG: Friends API response", res.status_code, res.text)
+        res = requests.get(f"{SUPABASE_URL}/rest/v1/Friends?select=*", headers=HEADERS)
         data = res.json()
-        if isinstance(data, list) and all(isinstance(f, dict) and "name" in f for f in data):
-            return [f["name"] for f in data]
-        else:
-            st.warning("⚠️ Invalid data format for friends list.")
-            return []
+        return [f["name"] for f in data if "name" in f]
     except Exception as e:
         st.error(f"❌ Failed to load friends: {e}")
         return []
 
 def add_friend(name):
     try:
-        url = f"{SUPABASE_URL}/rest/v1/Friends"
         payload = {"name": name}
         headers = {**HEADERS, "Prefer": "return=representation"}
-        res = requests.post(url, headers=headers, json=payload)
-        if res.status_code not in [200, 201]:
-            st.error(f"❌ Failed to add friend: {res.status_code} - {res.text}")
-        else:
+        res = requests.post(f"{SUPABASE_URL}/rest/v1/Friends", headers=headers, json=payload)
+        if res.status_code == 409:
+            st.warning(f"⚠️ '{name}' already exists.")
+        elif res.status_code in [200, 201]:
             st.success(f"✅ {name} added!")
+        else:
+            st.error(f"❌ Failed: {res.text}")
     except Exception as e:
         st.error(f"❌ Error adding friend: {e}")
 
-def delete_friend(friend_name):
+def delete_friend(name):
     try:
-        url = f"{SUPABASE_URL}/rest/v1/Friends?name=eq.{friend_name}"
-        res = requests.delete(url, headers=HEADERS)
-        if res.status_code == 204:
-            return True
-        else:
-            st.error(f"❌ Failed to delete friend: {res.status_code} - {res.text}")
-            return False
-    except Exception as e:
-        st.error(f"❌ Error deleting friend: {e}")
+        res = requests.delete(f"{SUPABASE_URL}/rest/v1/Friends?name=eq.{name}", headers=HEADERS)
+        return res.status_code == 204
+    except:
         return False
 
 def load_history():
     try:
-        url = f"{SUPABASE_URL}/rest/v1/History?select=id,person1,person2"
-        res = requests.get(url, headers=HEADERS)
-        st.write("DEBUG: History API response", res.status_code, res.text)
+        res = requests.get(f"{SUPABASE_URL}/rest/v1/History?select=id,person1,person2", headers=HEADERS)
         data = res.json()
-        if isinstance(data, list) and all("id" in h and "person1" in h and "person2" in h for h in data):
-            return [(h["id"], h["person1"], h["person2"]) for h in data]
-        else:
-            st.warning("⚠️ Invalid data format for history.")
-            return []
+        return [(h["id"], h["person1"], h["person2"]) for h in data]
     except Exception as e:
         st.error(f"❌ Failed to load history: {e}")
         return []
 
 def add_history(p1, p2):
     try:
-        url = f"{SUPABASE_URL}/rest/v1/History"
         payload = {"person1": p1, "person2": p2}
         headers = {**HEADERS, "Prefer": "return=representation"}
-        res = requests.post(url, headers=headers, json=payload)
+        res = requests.post(f"{SUPABASE_URL}/rest/v1/History", headers=headers, json=payload)
         if res.status_code in [200, 201]:
             record = res.json()[0]
             st.session_state.history.append((record["id"], record["person1"], record["person2"]))
-            st.success(f"✅ Added store trip: {p1} & {p2}")
-        else:
-            st.error(f"❌ Failed to add history: {res.status_code} - {res.text}")
+            st.success(f"✅ {p1} & {p2} picked!")
     except Exception as e:
         st.error(f"❌ Error adding history: {e}")
 
@@ -93,21 +119,16 @@ def delete_last_trip():
     if st.session_state.history:
         last_id, p1, p2 = st.session_state.history[-1]
         try:
-            url = f"{SUPABASE_URL}/rest/v1/History?id=eq.{last_id}"
-            res = requests.delete(url, headers=HEADERS)
+            res = requests.delete(f"{SUPABASE_URL}/rest/v1/History?id=eq.{last_id}", headers=HEADERS)
             if res.status_code == 204:
                 st.session_state.history.pop()
-                st.success(f"🗑️ Deleted last trip: {p1} & {p2}")
-            else:
-                st.error(f"❌ Failed to delete: {res.status_code} - {res.text}")
+                st.success(f"🗑️ Removed trip: {p1} & {p2}")
         except Exception as e:
             st.error(f"❌ Error deleting last trip: {e}")
-    else:
-        st.info("No trip to delete.")
 
-# ------------------------------
-# 🧠 Session State Bootstrapping
-# ------------------------------
+# -----------------------------
+# 🔄 Init Session State
+# -----------------------------
 if 'friends' not in st.session_state:
     st.session_state.friends = load_friends()
 if 'history' not in st.session_state:
@@ -117,88 +138,79 @@ if 'present_friends' not in st.session_state:
 if 'excluded_friends' not in st.session_state:
     st.session_state.excluded_friends = []
 
-# ------------------------------
-# 🎯 UI STARTS HERE
-# ------------------------------
-st.title("🥤 NOT IT! – Who's Going to the Store?")
+# -----------------------------
+# 🎯 UI Starts
+# -----------------------------
+st.markdown("# 🥤 NOT IT! – Who's Going to the Store?")
 
-# ➕ Add New Friend
-st.subheader("Add a Friend")
-new_friend = st.text_input("Add a friend if they are new:")
-
+# ➕ Add Friend
+st.markdown("### ➕ Add a Friend")
+new_friend = st.text_input("Add a new friend:")
 if st.button("Add Friend"):
-    if new_friend.strip() == "":
-        st.warning("⚠️ Enter a valid name.")
-    elif new_friend.strip() in st.session_state.friends:
-        st.info("👀 This friend is already in the list.")
+    if not new_friend.strip():
+        st.warning("Enter a valid name.")
+    elif new_friend in st.session_state.friends:
+        st.info("Already exists.")
     else:
         add_friend(new_friend.strip())
-        st.session_state.friends = load_friends()  # reload fresh
+        st.session_state.friends = load_friends()
 
-# 📋 Display All Friends
-st.subheader("All Friends")
+# 👥 Show All Friends
+st.markdown("### 🧑‍🤝‍🧑 All Friends")
 st.write(st.session_state.friends)
 
-# 🗑️ Delete a Friend
-st.subheader("🗑️ Remove a Friend")
+# 🗑️ Delete Friend
+st.markdown("### 🗑️ Remove a Friend")
 if st.session_state.friends:
-    friend_to_delete = st.selectbox("Select a friend to delete:", st.session_state.friends)
+    friend_to_delete = st.selectbox("Select friend to delete:", st.session_state.friends)
     if st.button("Delete Friend"):
         if delete_friend(friend_to_delete):
-            # RELOAD EVERYTHING after delete
             st.session_state.friends = load_friends()
             st.session_state.present_friends = [f for f in st.session_state.present_friends if f != friend_to_delete]
             st.session_state.excluded_friends = [f for f in st.session_state.excluded_friends if f != friend_to_delete]
-            st.success(f"✅ {friend_to_delete} deleted and list updated.")
-else:
-    st.write("No friends to delete.")
+            st.success(f"{friend_to_delete} deleted.")
 
-# ✅ Who's Present Today
-st.subheader("Who's Present Today?")
-present_selection = st.multiselect("Select who's around today:", st.session_state.friends, default=st.session_state.present_friends)
-st.session_state.present_friends = present_selection
+# ✅ Present Today
+st.markdown("### ✅ Who's Present Today?")
+st.session_state.present_friends = st.multiselect("Select who's around today:", st.session_state.friends, default=st.session_state.present_friends)
 
-# 🙅‍♂️ Exclude Certain Friends (they're present, but won't go)
-st.subheader("Exclude Friends (they're present, but won't go)")
-excluded_selection = st.multiselect("Exclude these friends from being picked:", st.session_state.present_friends, default=st.session_state.excluded_friends)
-st.session_state.excluded_friends = excluded_selection
+# 🙅‍♂️ Exclude Friends
+st.markdown("### 🙅‍♂️ Exclude Friends")
+st.session_state.excluded_friends = st.multiselect("Exclude from pick:", st.session_state.present_friends, default=st.session_state.excluded_friends)
 
-# 🎲 Pick the Next Two
-st.subheader("Pick Who's Going!")
-
+# 🎲 Pick Two
+st.markdown("### 🎲 Pick Who's Going!")
 if st.button("Pick Next Two"):
-    available_friends = list(set(st.session_state.present_friends) - set(st.session_state.excluded_friends))
-    if len(available_friends) < 2:
-        st.warning("🚫 Need at least two non-excluded friends to pick from!")
+    available = list(set(st.session_state.present_friends) - set(st.session_state.excluded_friends))
+    if len(available) < 2:
+        st.warning("Need at least 2 friends to pick from.")
     else:
-        recent_pairs = st.session_state.history[-3:]
-        recent_people = {person for _, p1, p2 in recent_pairs for person in (p1, p2)}
-        final_pool = list(set(available_friends) - recent_people)
-
-        if len(final_pool) < 2:
+        recent = st.session_state.history[-3:]
+        recent_people = {p for _, p1, p2 in recent for p in (p1, p2)}
+        pool = list(set(available) - recent_people)
+        if len(pool) < 2:
             st.session_state.history = []
-            final_pool = available_friends
-            st.info("🔄 Not enough fresh picks. Resetting history.")
+            pool = available
+            st.info("Resetting history.")
+        chosen = random.sample(pool, 2)
+        add_history(chosen[0], chosen[1])
 
-        chosen_two = random.sample(final_pool, 2)
-        add_history(chosen_two[0], chosen_two[1])
-
-# 🗑️ Delete Last Trip
+# 🔁 Undo Last
 if st.button("Undo Last Trip"):
     delete_last_trip()
 
-# 📈 Store Visit Count
-st.subheader("📊 Store Visit Stats")
+# 📈 Stats
+st.markdown("### 📊 Store Visit Stats")
 if st.session_state.history:
-    flat_list = [person for _, p1, p2 in st.session_state.history for person in (p1, p2)]
-    counts = Counter(flat_list)
-    for friend in st.session_state.friends:
-        st.write(f"**{friend}** has gone **{counts.get(friend, 0)}** times.")
+    all_people = [p for _, p1, p2 in st.session_state.history for p in (p1, p2)]
+    counts = Counter(all_people)
+    for f in st.session_state.friends:
+        st.write(f"**{f}** → {counts.get(f, 0)} trips")
 else:
-    st.write("No visits recorded yet.")
+    st.write("No visits yet.")
 
-# 📜 Past Pairs History
-st.subheader("🕓 Past Store Trips")
+# 📜 Past Trips
+st.markdown("### 🕓 Past Store Trips")
 if st.session_state.history:
     for i, (_, p1, p2) in enumerate(reversed(st.session_state.history), 1):
         st.write(f"{i}. {p1} & {p2}")
