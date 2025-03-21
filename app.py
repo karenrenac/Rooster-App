@@ -133,7 +133,7 @@ if st.button("Add Friend"):
         st.info("👀 This friend is already in the list.")
     else:
         add_friend(new_friend.strip())
-        st.session_state.friends.append(new_friend.strip())
+        st.session_state.friends = load_friends()  # reload fresh
 
 # 📋 Display All Friends
 st.subheader("All Friends")
@@ -145,12 +145,11 @@ if st.session_state.friends:
     friend_to_delete = st.selectbox("Select a friend to delete:", st.session_state.friends)
     if st.button("Delete Friend"):
         if delete_friend(friend_to_delete):
-            st.session_state.friends.remove(friend_to_delete)
-            if friend_to_delete in st.session_state.present_friends:
-                st.session_state.present_friends.remove(friend_to_delete)
-            if friend_to_delete in st.session_state.excluded_friends:
-                st.session_state.excluded_friends.remove(friend_to_delete)
-            st.success(f"✅ {friend_to_delete} deleted.")
+            # RELOAD EVERYTHING after delete
+            st.session_state.friends = load_friends()
+            st.session_state.present_friends = [f for f in st.session_state.present_friends if f != friend_to_delete]
+            st.session_state.excluded_friends = [f for f in st.session_state.excluded_friends if f != friend_to_delete]
+            st.success(f"✅ {friend_to_delete} deleted and list updated.")
 else:
     st.write("No friends to delete.")
 
