@@ -11,8 +11,8 @@ st.markdown(
     <style>
     /* Background image styling */
     body {
-        background: url('https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/side-bg.jpg'), 
-                    url('https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/side-bg.jpg');
+        background: url('https://raw.githubusercontent.com/karenrenac/roster-app/main/download.jpg'), 
+                    url('https://raw.githubusercontent.com/karenrenac/roster-app/main/download.jpg');
         background-repeat: repeat-y, repeat-y;
         background-position: left center, right center;
         background-size: contain, contain;
