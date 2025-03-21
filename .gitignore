@@ -9,3 +9,7 @@ __pycache__/
 # OS junk
 .DS_Store
 Thumbs.db
+
+#streamlit secrets
+.streamlit/
+.streamlit/secrets.toml
