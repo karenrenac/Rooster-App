@@ -1,0 +1,11 @@
+# Ignore Python virtual environment
+env/
+__pycache__/
+*.pyc
+
+# VS Code configs
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
