@@ -31,9 +31,16 @@ This app uses **Streamlit** as the frontend and **Supabase** as the cloud backen
 
 ## 🚀 Getting Started (Run Locally)
 
-### 1. Clone the repo
+1. Clone the repo
 ```bash
-git clone https://github.com/your-username/not-it-app.git
-cd not-it-app
+git clone https://github.com/your-username/roster-app.git
+cd roster-app
+```
 
+2. Run the streamlit app:
+```
+streamlit run app.py
+```
+
+3. Access the App at http://localhost:8501 in your browser.
 
