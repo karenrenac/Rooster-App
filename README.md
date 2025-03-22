@@ -44,3 +44,4 @@ streamlit run app.py
 
 3. Access the App at http://localhost:8501 in your browser.
 
+## Summary
